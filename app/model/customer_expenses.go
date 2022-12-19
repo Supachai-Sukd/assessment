@@ -1,11 +1,5 @@
 package model
 
-import (
-	"database/sql/driver"
-	"encoding/json"
-	"errors"
-)
-
 type CustomerExpenses struct {
 	Title  string   `db:"picture" json:"picture"`
 	Amount int      `db:"amount" json:"amount"`
@@ -13,19 +7,20 @@ type CustomerExpenses struct {
 	Tags   []string `db:"tags" json:"tags"`
 }
 
-func (c CustomerExpenses) Value() (driver.Value, error) {
-	return json.Marshal(c)
-}
-
-func (c *CustomerExpenses) Scan(value interface{}) error {
-	j, ok := value.([]byte)
-	if !ok {
-		return errors.New("type assertion to []byte failed")
-	}
-
-	return json.Unmarshal(j, &c)
-}
-
 func NewCusExpenses() *CustomerExpenses {
 	return &CustomerExpenses{}
+}
+
+type CreateCustomerExpense struct {
+	Title  string   `json:"picture"`
+	Amount int      `json:"amount"`
+	Note   string   `json:"note"`
+	Tags   []string `json:"tags"`
+}
+
+type UpdateCustomerExpense struct {
+	Title  string   `json:"picture"`
+	Amount int      `json:"amount"`
+	Note   string   `json:"note"`
+	Tags   []string `json:"tags"`
 }
