@@ -9,9 +9,9 @@ services:
     ports:
       - 1112:5432
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-root}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-root}
-      - POSTGRES_DB=golang
+      - POSTGRES_USER=${DB_USER:-root}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-root}
+      - POSTGRES_DB=${DB_NAME:-golang}
     restart: always
   pgadmin4:
     image: dpage/pgadmin4 #ตอนเพิ่ม database เพื่อดูใช้ ipv4 แทน localhost
