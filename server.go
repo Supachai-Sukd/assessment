@@ -31,7 +31,7 @@ func main() {
 	signal.Notify(shutdown, os.Interrupt)
 
 	<-shutdown
-
+	fmt.Println("Hello my friend")
 	// Shutdown in 10 second
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

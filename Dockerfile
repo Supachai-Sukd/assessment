@@ -8,6 +8,7 @@ RUN go mod download
 
 COPY . .
 
+# STATIC BINARY
 RUN CGO_ENABLED=0 go test --tags=unit -v ./...
 
 RUN go build -o ./out/go-app .

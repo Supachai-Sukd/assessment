@@ -1,0 +1,38 @@
+version: "3.8"
+
+
+
+services:
+  database:
+    image: postgres:13
+    container_name: go-postgres
+    ports:
+      - 1112:5432
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-root}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-root}
+      - POSTGRES_DB=golang
+    restart: always
+  pgadmin4:
+    image: dpage/pgadmin4 #ตอนเพิ่ม database เพื่อดูใช้ ipv4 แทน localhost
+    container_name: go-pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=gogogo@gmail.com
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD:-gogogo}
+    ports:
+      - 1111:80
+    restart: always
+  backend:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 2565:2565
+    environment:
+      - PORT=2565
+    container_name: golang-backend
+    depends_on:
+      - database
+    restart: always
+
+
