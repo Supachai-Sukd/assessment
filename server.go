@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	"github.com/supachai-sukd/assessment/pkg/database"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,16 +14,27 @@ import (
 )
 
 func main() {
-	e := echo.New()
-	e.Logger.SetLevel(log.INFO)
-	e.GET("/", func(c echo.Context) error {
+	api := echo.New()
+	api.Logger.SetLevel(log.INFO)
+	api.Use(middleware.Recover())
+	api.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
+	}))
+	db := database.GetInstance()
+	if db == nil {
+		log.Fatalf("Could not connect to database")
+	}
+	defer db.Close()
+
+	api.GET("/", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, "OK")
 	})
 
 	// os.Getenv("PORT") Use after refactor.
 	go func() {
-		if err := e.Start(":2565"); err != nil && err != http.ErrServerClosed { // Start server
-			e.Logger.Fatal("shutting down the server")
+		if err := api.Start(":2565"); err != nil && err != http.ErrServerClosed { // Start server
+			api.Logger.Fatal("shutting down the server")
 		}
 	}()
 	fmt.Printf("start at port: %v\n", 2565) // Port 2565
@@ -36,8 +49,8 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := e.Shutdown(ctx); err != nil {
-		e.Logger.Fatal(err)
+	if err := api.Shutdown(ctx); err != nil {
+		api.Logger.Fatal(err)
 	}
 
 }
