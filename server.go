@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/supachai-sukd/assessment/pkg/database"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -26,6 +27,16 @@ func main() {
 		log.Fatalf("Could not connect to database")
 	}
 	defer db.Close()
+
+	sqlFile, sqlErr := ioutil.ReadFile("platform/migrations/create_init_tables.up.sql")
+	if sqlErr != nil {
+		log.Fatal(sqlErr)
+	}
+
+	_, err := db.Exec(string(sqlFile))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	api.GET("/", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, "OK")
