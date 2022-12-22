@@ -1,4 +1,4 @@
-package model
+package customer_expense
 
 type CustomerExpenses struct {
 	Title  string   `db:"picture" json:"picture"`
