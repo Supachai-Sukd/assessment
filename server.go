@@ -6,8 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
-	"github.com/supachai-sukd/assessment/pkg/database"
-	"io/ioutil"
+	"github.com/supachai-sukd/assessment/app/customer_expense"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,37 +14,42 @@ import (
 )
 
 func main() {
-	api := echo.New()
-	api.Logger.SetLevel(log.INFO)
-	api.Use(middleware.Recover())
-	api.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+	customer_expense.InitDB()
+	//db := database.GetInstance()
+	//
+	//defer db.Close()
+	e := echo.New()
+	e.Logger.SetLevel(log.INFO)
+	e.Use(middleware.Recover())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
 	}))
-	db := database.GetInstance()
-	if db == nil {
-		log.Fatalf("Could not connect to database")
-	}
-	defer db.Close()
 
-	sqlFile, sqlErr := ioutil.ReadFile("platform/migrations/create_init_tables.up.sql")
-	if sqlErr != nil {
-		log.Fatal(sqlErr)
-	}
+	//if db == nil {
+	//	log.Fatalf("Could not connect to database")
+	//}
+	//
+	//sqlFile, sqlErr := ioutil.ReadFile("platform/migrations/create_init_tables.up.sql")
+	//if sqlErr != nil {
+	//	log.Fatal(sqlErr)
+	//}
+	//
+	//_, err := db.Exec(string(sqlFile))
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
 
-	_, err := db.Exec(string(sqlFile))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	api.GET("/", func(c echo.Context) error {
+	e.GET("/", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, "OK")
 	})
 
+	e.POST("/expenses", customer_expense.AddExpenses)
+
 	// os.Getenv("PORT") Use after refactor.
 	go func() {
-		if err := api.Start(":2565"); err != nil && err != http.ErrServerClosed { // Start server
-			api.Logger.Fatal("shutting down the server")
+		if err := e.Start(":2565"); err != nil && err != http.ErrServerClosed { // Start server
+			e.Logger.Fatal("shutting down the server")
 		}
 	}()
 	fmt.Printf("start at port: %v\n", 2565) // Port 2565
@@ -60,8 +64,8 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := api.Shutdown(ctx); err != nil {
-		api.Logger.Fatal(err)
+	if err := e.Shutdown(ctx); err != nil {
+		e.Logger.Fatal(err)
 	}
 
 }
