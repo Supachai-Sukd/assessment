@@ -26,25 +26,12 @@ func main() {
 		AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
 	}))
 
-	//if db == nil {
-	//	log.Fatalf("Could not connect to database")
-	//}
-	//
-	//sqlFile, sqlErr := ioutil.ReadFile("platform/migrations/create_init_tables.up.sql")
-	//if sqlErr != nil {
-	//	log.Fatal(sqlErr)
-	//}
-	//
-	//_, err := db.Exec(string(sqlFile))
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-
 	e.GET("/", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, "OK")
 	})
 
 	e.POST("/expenses", customer_expense.AddExpenses)
+	e.GET("/expenses/:id", customer_expense.GetExpensesById)
 
 	// os.Getenv("PORT") Use after refactor.
 	go func() {
