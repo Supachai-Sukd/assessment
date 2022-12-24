@@ -51,6 +51,10 @@ func GetExpensesById(c echo.Context) error {
 		ce.Tags = strings.Split(tags.String, ",")
 	}
 
+	for i, tag := range ce.Tags {
+		ce.Tags[i] = strings.Trim(tag, "{}")
+	}
+
 	switch err {
 	case sql.ErrNoRows:
 		return c.JSON(http.StatusNotFound, Err{Message: "expenses information not found"})
