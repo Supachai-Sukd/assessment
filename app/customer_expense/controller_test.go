@@ -7,11 +7,12 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 )
 
-func TestExpense(t *testing.T) {
+func TestAddExpense(t *testing.T) {
 
 	body := bytes.NewBufferString(`{
 		"title": "bank",
@@ -30,6 +31,37 @@ func TestExpense(t *testing.T) {
 	assert.NotEqual(t, 0, c.ID)
 	assert.Equal(t, "bank", c.Title)
 	assert.Equal(t, "banana", c.Note)
+}
+
+func TestGetExpensesById(t *testing.T) {
+	ce := seedExpensesInformation(t)
+
+	var latest CustomerExpenses
+	res := request(http.MethodGet, uri("expenses", strconv.Itoa(ce.ID)), nil)
+	err := res.Decode(&latest)
+
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, ce.ID, latest.ID)
+	assert.NotEmpty(t, latest.Title)
+	assert.NotEmpty(t, latest.Amount)
+	assert.NotEmpty(t, latest.Note)
+	assert.NotEmpty(t, latest.Tags)
+}
+
+func seedExpensesInformation(t *testing.T) CustomerExpenses {
+	var ce CustomerExpenses
+	body := bytes.NewBufferString(`{
+		"title": "bank",
+		"amount": 19,
+		"note": "banana",
+		"tags": ["food", "beverage"]
+	}`)
+	err := request(http.MethodPost, uri("expenses"), body).Decode(&ce)
+	if err != nil {
+		t.Fatal("can't add expenses:", err)
+	}
+	return ce
 }
 
 func uri(paths ...string) string {
