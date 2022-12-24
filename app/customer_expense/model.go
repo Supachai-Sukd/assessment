@@ -12,16 +12,16 @@ func NewCusExpenses() *CustomerExpenses {
 	return &CustomerExpenses{}
 }
 
-type CreateCustomerExpense struct {
-	Title  string   `json:"title"`
-	Amount float64  `json:"amount"`
-	Note   string   `json:"note"`
-	Tags   []string `json:"tags"`
-}
-
-type UpdateCustomerExpense struct {
-	Title  string   `json:"title"`
-	Amount float64  `json:"amount"`
-	Note   string   `json:"note"`
-	Tags   []string `json:"tags"`
-}
+//type CreateCustomerExpense struct {
+//	Title  string   `json:"title"`
+//	Amount float64  `json:"amount"`
+//	Note   string   `json:"note"`
+//	Tags   []string `json:"tags"`
+//}
+//
+//type UpdateCustomerExpense struct {
+//	Title  string   `json:"title"`
+//	Amount float64  `json:"amount"`
+//	Note   string   `json:"note"`
+//	Tags   []string `json:"tags"`
+//}
