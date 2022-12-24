@@ -49,6 +49,29 @@ func TestGetExpensesById(t *testing.T) {
 	assert.NotEmpty(t, latest.Tags)
 }
 
+func TestUpdateExpensesById(t *testing.T) {
+	ce := seedExpensesInformation(t)
+
+	body := bytes.NewBufferString(`{
+		"title": "bank_kub",
+		"amount": 99,
+		"note": "banana grape",
+		"tags": ["food", "fruit"]
+	}`)
+
+	var latest CustomerExpenses
+	res := request(http.MethodPut, uri("expenses", strconv.Itoa(ce.ID)), body)
+	err := res.Decode(&latest)
+
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, ce.ID, latest.ID)
+	assert.NotEmpty(t, latest.Title)
+	assert.NotEmpty(t, latest.Amount)
+	assert.NotEmpty(t, latest.Note)
+	assert.NotEmpty(t, latest.Tags)
+}
+
 func seedExpensesInformation(t *testing.T) CustomerExpenses {
 	var ce CustomerExpenses
 	body := bytes.NewBufferString(`{

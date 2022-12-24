@@ -42,8 +42,8 @@ func GetExpensesById(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, Err{Message: "can't prepare query expenses information statment:" + err.Error()})
 	}
 
-	row := stmt.QueryRow(id)
 	ce := CustomerExpenses{}
+	row := stmt.QueryRow(id)
 
 	var tags sql.NullString
 	err = row.Scan(&ce.ID, &ce.Title, &ce.Amount, &ce.Note, &tags)
@@ -64,4 +64,29 @@ func GetExpensesById(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, Err{Message: "can't scan expenses information:" + err.Error()})
 	}
 
+}
+
+func UpdateExpenses(c echo.Context) error {
+	id := c.Param("id")
+
+	ce := CustomerExpenses{}
+	if err := c.Bind(&ce); err != nil {
+		return c.JSON(http.StatusBadRequest, Err{Message: "invalid request body"})
+	}
+
+	stmt, err := db.Prepare("UPDATE expenses SET title=$2, amount=$3, note=$4, tags=$5::text[] WHERE id=$1 RETURNING id")
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, Err{Message: "can't prepare query expenses information statement: " + err.Error()})
+	}
+	row := stmt.QueryRow(id, ce.Title, ce.Amount, ce.Note, pq.Array(ce.Tags))
+
+	err = row.Scan(&ce.ID)
+	switch err {
+	case sql.ErrNoRows:
+		return c.JSON(http.StatusNotFound, Err{Message: "expenses information not found"})
+	case nil:
+		return c.JSON(http.StatusOK, ce)
+	default:
+		return c.JSON(http.StatusInternalServerError, Err{Message: "can't scan expenses information: " + err.Error()})
+	}
 }
