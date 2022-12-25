@@ -73,19 +73,23 @@ func TestUpdateExpensesById(t *testing.T) {
 }
 
 func TestGetAllExpenses(t *testing.T) {
-	ce := seedExpensesInformation(t)
+	_ = seedExpensesInformation(t)
 
-	var latest CustomerExpenses
-	res := request(http.MethodGet, uri("expenses", strconv.Itoa(ce.ID)), nil)
+	var latest []CustomerExpenses
+	res := request(http.MethodGet, uri("expenses"), nil)
 	err := res.Decode(&latest)
 
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Equal(t, ce.ID, latest.ID)
-	assert.NotEmpty(t, latest.Title)
-	assert.NotEmpty(t, latest.Amount)
-	assert.NotEmpty(t, latest.Note)
-	assert.NotEmpty(t, latest.Tags)
+
+	assert.NotEmpty(t, latest)
+	assert.True(t, len(latest) > 0)              // check that the array has more than zero element
+	assert.NotEmpty(t, latest[len(latest)-1].ID) // check that the last element has a non-empty
+	assert.NotEmpty(t, latest[len(latest)-1].Title)
+	assert.NotEmpty(t, latest[len(latest)-1].Amount)
+	assert.NotEmpty(t, latest[len(latest)-1].Note)
+	assert.NotEmpty(t, latest[len(latest)-1].Tags)
+
 }
 
 func seedExpensesInformation(t *testing.T) CustomerExpenses {
