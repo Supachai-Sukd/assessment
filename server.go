@@ -35,13 +35,12 @@ func main() {
 	e.PUT("/expenses/:id", customer_expense.UpdateExpenses)
 	e.GET("/expenses", customer_expense.GetAllExpenses)
 
-	// os.Getenv("PORT") Use after refactor.
 	go func() {
-		if err := e.Start(":2565"); err != nil && err != http.ErrServerClosed { // Start server
+		if err := e.Start(":" + os.Getenv("PORT")); err != nil && err != http.ErrServerClosed { // Start server
 			e.Logger.Fatal("shutting down the server")
 		}
 	}()
-	fmt.Printf("start at port: %v\n", 2565) // Port 2565
+	fmt.Printf("start at port: %v\n", os.Getenv("PORT")) // Port 2565
 
 	// Create channel shutdown
 	shutdown := make(chan os.Signal, 1)
