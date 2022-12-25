@@ -1,6 +1,7 @@
 version: "3.8"
 
-
+networks:
+  golang-docker:
 
 services:
   database:
@@ -9,9 +10,10 @@ services:
     ports:
       - 1112:5432
     environment:
-      - POSTGRES_USER=${DB_USER:-root}
+      - POSTGRES_USER=${DB_USERNAME:-root}
       - POSTGRES_PASSWORD=${DB_PASSWORD:-root}
-      - POSTGRES_DB=${DB_NAME:-golang}
+      - POSTGRES_DB=${DB_DATABASE:-golang}
+      - POSTGRES_SSLMODE=disable
     restart: always
   pgadmin4:
     image: dpage/pgadmin4 #ตอนเพิ่ม database เพื่อดูใช้ ipv4 แทน localhost
@@ -27,9 +29,10 @@ services:
       context: .
       dockerfile: ./Dockerfile
     ports:
-      - 2565:2565
-    environment:
-      - PORT=2565
+      - ${PORT:-2565}:${PORT:-2565}
+    #environment:
+     #  - DATABASE_URL=postgres://${DB_USERNAME:-root}:${DB_PASSWORD:-root}@postgres:5432/${DB_DATABASE:-golang}?sslmode=disable
+#      - PORT=2565
     container_name: golang-backend
     depends_on:
       - database
