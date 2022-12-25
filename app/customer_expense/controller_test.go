@@ -1,3 +1,5 @@
+//go:build integration
+
 package customer_expense
 
 import (
@@ -11,6 +13,8 @@ import (
 	"strings"
 	"testing"
 )
+
+// go test -v -tags integration
 
 func TestAddExpense(t *testing.T) {
 

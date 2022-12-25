@@ -23,9 +23,6 @@ func AddExpenses(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 	}
 
-	//var sliceString = strings.Join(ce.Tags, ",")
-	//var sliceString = "'{" + strings.Join(ce.Tags, ",") + "}'"
-
 	row := db.QueryRow("INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4::text[])  RETURNING id", ce.Title, ce.Amount, ce.Note, pq.Array(ce.Tags))
 	err = row.Scan(&ce.ID)
 	if err != nil {
