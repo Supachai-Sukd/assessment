@@ -72,6 +72,26 @@ func TestUpdateExpensesById(t *testing.T) {
 	assert.NotEmpty(t, latest.Tags)
 }
 
+func TestGetAllExpenses(t *testing.T) {
+	_ = seedExpensesInformation(t)
+
+	var latest []CustomerExpenses
+	res := request(http.MethodGet, uri("expenses"), nil)
+	err := res.Decode(&latest)
+
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	assert.NotEmpty(t, latest)
+	assert.True(t, len(latest) > 0)              // check that the array has more than zero element
+	assert.NotEmpty(t, latest[len(latest)-1].ID) // check that the last element has a non-empty
+	assert.NotEmpty(t, latest[len(latest)-1].Title)
+	assert.NotEmpty(t, latest[len(latest)-1].Amount)
+	assert.NotEmpty(t, latest[len(latest)-1].Note)
+	assert.NotEmpty(t, latest[len(latest)-1].Tags)
+
+}
+
 func seedExpensesInformation(t *testing.T) CustomerExpenses {
 	var ce CustomerExpenses
 	body := bytes.NewBufferString(`{
