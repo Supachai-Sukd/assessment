@@ -33,6 +33,7 @@ func main() {
 	e.POST("/expenses", customer_expense.AddExpenses)
 	e.GET("/expenses/:id", customer_expense.GetExpensesById)
 	e.PUT("/expenses/:id", customer_expense.UpdateExpenses)
+	e.GET("/expenses", customer_expense.GetAllExpenses)
 
 	// os.Getenv("PORT") Use after refactor.
 	go func() {
