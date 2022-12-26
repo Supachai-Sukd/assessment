@@ -23,13 +23,12 @@ func AddExpenses(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 	}
 
-	row := db.QueryRow("INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4::text[])  RETURNING id", ce.Title, ce.Amount, ce.Note, pq.Array(ce.Tags))
-	err = row.Scan(&ce.ID)
-	if err != nil {
+	resp, errs := AddExpense(ce)
+	if errs != nil {
 		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
 	}
 
-	return c.JSON(http.StatusCreated, ce)
+	return c.JSON(http.StatusCreated, resp)
 }
 
 func GetExpensesById(c echo.Context) error {
