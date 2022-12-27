@@ -2,20 +2,20 @@ package customer_expense
 
 import (
 	"database/sql"
-	_ "database/sql"
+	//"database/sql"
+	//_ "database/sql"
 	"github.com/labstack/echo/v4"
 	"github.com/lib/pq"
 	"net/http"
 	"strings"
 )
 
-var db *sql.DB
-
 type Err struct {
 	Message string `json:"message"`
 }
 
 func AddExpenses(c echo.Context) error {
+
 	ce := CustomerExpenses{}
 
 	err := c.Bind(&ce)
@@ -23,7 +23,7 @@ func AddExpenses(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 	}
 
-	resp, errs := AddExpense(ce)
+	resp, errs := AddExpenseService(ce)
 	if errs != nil {
 		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
 	}
@@ -33,33 +33,14 @@ func AddExpenses(c echo.Context) error {
 
 func GetExpensesById(c echo.Context) error {
 	id := c.Param("id")
-	stmt, err := db.Prepare("SELECT id, title, amount, note, tags FROM expenses WHERE id = $1")
+	ce, err := GetExpensesByIdService(db, id)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, Err{Message: "can't prepare query expenses information statment:" + err.Error()})
-	}
-
-	ce := CustomerExpenses{}
-	row := stmt.QueryRow(id)
-
-	var tags sql.NullString
-	err = row.Scan(&ce.ID, &ce.Title, &ce.Amount, &ce.Note, &tags)
-	if tags.Valid {
-		ce.Tags = strings.Split(tags.String, ",")
-	}
-
-	for i, tag := range ce.Tags {
-		ce.Tags[i] = strings.Trim(tag, "{}")
-	}
-
-	switch err {
-	case sql.ErrNoRows:
-		return c.JSON(http.StatusNotFound, Err{Message: "expenses information not found"})
-	case nil:
-		return c.JSON(http.StatusOK, ce)
-	default:
+		if err == sql.ErrNoRows {
+			return c.JSON(http.StatusNotFound, Err{Message: "expenses information not found"})
+		}
 		return c.JSON(http.StatusInternalServerError, Err{Message: "can't scan expenses information:" + err.Error()})
 	}
-
+	return c.JSON(http.StatusOK, ce)
 }
 
 func UpdateExpenses(c echo.Context) error {

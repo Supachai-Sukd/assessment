@@ -8,7 +8,10 @@ import (
 	"os"
 )
 
+var db *sql.DB
+
 func InitDB() {
+
 	var err error
 	db, err = sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
 		os.Getenv("DB_HOST"),
@@ -29,3 +32,6 @@ func InitDB() {
 	}
 
 }
+
+
+
