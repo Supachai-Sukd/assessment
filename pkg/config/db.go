@@ -2,7 +2,6 @@ package config
 
 import (
 	"database/sql"
-	"fmt"
 	_ "github.com/lib/pq"
 	"log"
 	"os"
@@ -13,13 +12,14 @@ var DB *sql.DB
 func InitDB() (*sql.DB, error) {
 
 	var err error
-	DB, err = sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_USERNAME"),
-		os.Getenv("DB_DATABASE"),
-		os.Getenv("DB_PASSWORD"),
-		"disable"))
+
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		databaseURL = "postgres://hgqvnwpr:F50_9sky10ii2OVedWnRhdJWvm66iSW7@tiny.db.elephantsql.com/hgqvnwpr?sslmode=disable"
+	}
+
+	DB, err = sql.Open("postgres", databaseURL)
+
 	if err != nil {
 		log.Fatal("Connect to database error", err)
 	}

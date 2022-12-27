@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/log"
 	"github.com/supachai-sukd/assessment/app/customer_expense"
 	"github.com/supachai-sukd/assessment/pkg/config"
 	"net/http"
@@ -16,11 +15,9 @@ import (
 
 func main() {
 	config.InitDB()
-	//db := database.GetInstance()
-	//
-	//defer db.Close()
+
 	e := echo.New()
-	e.Logger.SetLevel(log.INFO)
+
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
