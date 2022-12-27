@@ -1,4 +1,4 @@
-package customer_expense
+package config
 
 import (
 	"database/sql"
@@ -8,12 +8,12 @@ import (
 	"os"
 )
 
-var db *sql.DB
+var DB *sql.DB
 
-func InitDB() {
+func InitDB() (*sql.DB, error) {
 
 	var err error
-	db, err = sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
+	DB, err = sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_PORT"),
 		os.Getenv("DB_USERNAME"),
@@ -25,13 +25,11 @@ func InitDB() {
 	}
 
 	createTb := `CREATE TABLE IF NOT EXISTS expenses (id SERIAL PRIMARY KEY,title TEXT,amount FLOAT,note TEXT,tags TEXT[]);`
-	_, err = db.Exec(createTb)
+	_, err = DB.Exec(createTb)
 
 	if err != nil {
 		log.Fatal("can't create table", err)
 	}
 
+	return nil, nil
 }
-
-
-

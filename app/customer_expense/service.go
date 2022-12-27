@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
+	"github.com/supachai-sukd/assessment/pkg/config"
 	"strings"
 )
 
 // รอสร้าง NewExpenses ที่ pointer ไปหา Struct ที่ใส้ในมี db *sql.db
 
 func AddExpenseService(ce CustomerExpenses) (CustomerExpenses, error) {
-	row := db.QueryRow("INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4::text[])  RETURNING id", ce.Title, ce.Amount, ce.Note, pq.Array(ce.Tags))
+	row := config.DB.QueryRow("INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4::text[])  RETURNING id", ce.Title, ce.Amount, ce.Note, pq.Array(ce.Tags))
 	err := row.Scan(&ce.ID)
 	if err != nil {
 		return ce, err
@@ -44,7 +45,7 @@ func GetExpensesByIdService(db *sql.DB, id string) (CustomerExpenses, error) {
 }
 
 func UpdateExpensesService(id string, ce CustomerExpenses) (CustomerExpenses, error) {
-	stmt, err := db.Prepare("UPDATE expenses SET title=$2, amount=$3, note=$4, tags=$5::text[] WHERE id=$1 RETURNING id")
+	stmt, err := config.DB.Prepare("UPDATE expenses SET title=$2, amount=$3, note=$4, tags=$5::text[] WHERE id=$1 RETURNING id")
 	if err != nil {
 		return CustomerExpenses{}, fmt.Errorf("can't prepare query expenses information statement: %v", err)
 	}

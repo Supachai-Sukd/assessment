@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/supachai-sukd/assessment/app/customer_expense"
+	"github.com/supachai-sukd/assessment/pkg/config"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,7 +15,7 @@ import (
 )
 
 func main() {
-	customer_expense.InitDB()
+	config.InitDB()
 	//db := database.GetInstance()
 	//
 	//defer db.Close()
