@@ -33,12 +33,17 @@ func main() {
 	e.PUT("/expenses/:id", customer_expense.UpdateExpenses)
 	e.GET("/expenses", customer_expense.GetAllExpenses)
 
+	defaultPORT := os.Getenv("PORT")
+	if defaultPORT == "" {
+		defaultPORT = "2565"
+	}
+
 	go func() {
-		if err := e.Start(":" + os.Getenv("PORT")); err != nil && err != http.ErrServerClosed { // Start server
+		if err := e.Start(":" + defaultPORT); err != nil && err != http.ErrServerClosed { // Start server
 			e.Logger.Fatal("shutting down the server")
 		}
 	}()
-	fmt.Printf("start at port: %v\n", os.Getenv("PORT")) // Port 2565
+	fmt.Printf("start at port: %v\n", defaultPORT) // Port 2565
 
 	// Create channel shutdown
 	shutdown := make(chan os.Signal, 1)
