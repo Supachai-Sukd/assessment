@@ -18,3 +18,10 @@ COPY --from=build-base /app/out/go-app /app/go-app
 
 EXPOSE 2565
 CMD ["/app/go-app"]
+
+
+
+
+
+
+

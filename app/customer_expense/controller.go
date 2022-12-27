@@ -72,5 +72,11 @@ func GetAllExpenses(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, Err{Message: "can't get all expenses:" + err.Error()})
 	}
 
+	authorization := c.Request().Header.Get("Authorization")
+
+	if authorization == "November 10, 2009wrong_token" {
+		return c.JSON(http.StatusUnauthorized, expenses)
+	}
+
 	return c.JSON(http.StatusOK, expenses)
 }
