@@ -3,6 +3,7 @@ package customer_expense
 import (
 	"database/sql"
 	_ "database/sql"
+	"fmt"
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 	"strings"
@@ -40,4 +41,22 @@ func GetExpensesByIdService(db *sql.DB, id string) (CustomerExpenses, error) {
 	}
 
 	return ce, err
+}
+
+func UpdateExpensesService(id string, ce CustomerExpenses) (CustomerExpenses, error) {
+	stmt, err := db.Prepare("UPDATE expenses SET title=$2, amount=$3, note=$4, tags=$5::text[] WHERE id=$1 RETURNING id")
+	if err != nil {
+		return CustomerExpenses{}, fmt.Errorf("can't prepare query expenses information statement: %v", err)
+	}
+	row := stmt.QueryRow(id, ce.Title, ce.Amount, ce.Note, pq.Array(ce.Tags))
+
+	err = row.Scan(&ce.ID)
+	switch err {
+	case sql.ErrNoRows:
+		return CustomerExpenses{}, fmt.Errorf("expenses information not found")
+	case nil:
+		return ce, nil
+	default:
+		return CustomerExpenses{}, fmt.Errorf("can't scan expenses information: %v", err)
+	}
 }

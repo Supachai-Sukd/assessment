@@ -5,7 +5,6 @@ import (
 	//"database/sql"
 	//_ "database/sql"
 	"github.com/labstack/echo/v4"
-	"github.com/lib/pq"
 	"net/http"
 	"strings"
 )
@@ -51,21 +50,12 @@ func UpdateExpenses(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, Err{Message: "invalid request body"})
 	}
 
-	stmt, err := db.Prepare("UPDATE expenses SET title=$2, amount=$3, note=$4, tags=$5::text[] WHERE id=$1 RETURNING id")
+	updatedCE, err := UpdateExpensesService(id, ce)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, Err{Message: "can't prepare query expenses information statement: " + err.Error()})
+		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
 	}
-	row := stmt.QueryRow(id, ce.Title, ce.Amount, ce.Note, pq.Array(ce.Tags))
 
-	err = row.Scan(&ce.ID)
-	switch err {
-	case sql.ErrNoRows:
-		return c.JSON(http.StatusNotFound, Err{Message: "expenses information not found"})
-	case nil:
-		return c.JSON(http.StatusOK, ce)
-	default:
-		return c.JSON(http.StatusInternalServerError, Err{Message: "can't scan expenses information: " + err.Error()})
-	}
+	return c.JSON(http.StatusOK, updatedCE)
 }
 
 func GetAllExpenses(c echo.Context) error {
