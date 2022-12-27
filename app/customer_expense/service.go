@@ -60,3 +60,36 @@ func UpdateExpensesService(id string, ce CustomerExpenses) (CustomerExpenses, er
 		return CustomerExpenses{}, fmt.Errorf("can't scan expenses information: %v", err)
 	}
 }
+
+func GetAllExpensesService(db *sql.DB) ([]CustomerExpenses, error) {
+	stmt, err := db.Prepare("SELECT * FROM expenses")
+	if err != nil {
+		return nil, err
+	}
+
+	rows, errs := stmt.Query()
+	if errs != nil {
+		return nil, errs
+	}
+
+	ce := []CustomerExpenses{}
+
+	for rows.Next() {
+		cust := CustomerExpenses{}
+		var tags sql.NullString
+		err := rows.Scan(&cust.ID, &cust.Title, &cust.Amount, &cust.Note, &tags)
+		if tags.Valid {
+			cust.Tags = strings.Split(tags.String, ",")
+		}
+
+		for i, tag := range cust.Tags {
+			cust.Tags[i] = strings.Trim(tag, "{}")
+		}
+		if err != nil {
+			return nil, err
+		}
+		ce = append(ce, cust)
+	}
+
+	return ce, nil
+}

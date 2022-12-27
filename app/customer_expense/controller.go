@@ -6,7 +6,6 @@ import (
 	//_ "database/sql"
 	"github.com/labstack/echo/v4"
 	"net/http"
-	"strings"
 )
 
 type Err struct {
@@ -59,33 +58,10 @@ func UpdateExpenses(c echo.Context) error {
 }
 
 func GetAllExpenses(c echo.Context) error {
-	stmt, err := db.Prepare("SELECT * FROM expenses ")
+	expenses, err := GetAllExpensesService(db)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, Err{Message: "can't prepare query all expenses statment:" + err.Error()})
+		return c.JSON(http.StatusInternalServerError, Err{Message: "can't get all expenses:" + err.Error()})
 	}
 
-	rows, errs := stmt.Query()
-	if errs != nil {
-		return c.JSON(http.StatusInternalServerError, Err{Message: "can't query all expenses:" + err.Error()})
-	}
-	ce := []CustomerExpenses{}
-
-	for rows.Next() {
-		cust := CustomerExpenses{}
-		var tags sql.NullString
-		err := rows.Scan(&cust.ID, &cust.Title, &cust.Amount, &cust.Note, &tags)
-		if tags.Valid {
-			cust.Tags = strings.Split(tags.String, ",")
-		}
-
-		for i, tag := range cust.Tags {
-			cust.Tags[i] = strings.Trim(tag, "{}")
-		}
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, Err{Message: "can't scan expenses:" + err.Error()})
-		}
-		ce = append(ce, cust)
-	}
-
-	return c.JSON(http.StatusOK, ce)
+	return c.JSON(http.StatusOK, expenses)
 }
