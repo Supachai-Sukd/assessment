@@ -10,8 +10,6 @@ import (
 	"strings"
 )
 
-// รอสร้าง NewExpenses ที่ pointer ไปหา Struct ที่ใส้ในมี db *sql.db
-
 func AddExpenseService(ce CustomerExpenses) (CustomerExpenses, error) {
 	row := config.DB.QueryRow("INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4::text[])  RETURNING id", ce.Title, ce.Amount, ce.Note, pq.Array(ce.Tags))
 	err := row.Scan(&ce.ID)
