@@ -1,9 +1,12 @@
 package customer_expense
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"github.com/supachai-sukd/assessment/pkg/config"
 	"net/http"
 	_ "net/http"
 	"net/http/httptest"
@@ -18,7 +21,7 @@ import (
 	_ "github.com/stretchr/testify/assert"
 )
 
-func TestListNews(t *testing.T) {
+func TestListExpenses(t *testing.T) {
 	// Arrange
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/expenses", strings.NewReader(""))
@@ -53,5 +56,52 @@ func TestListNews(t *testing.T) {
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Equal(t, expected, combineRecBody)
+	}
+}
+
+func TestAddExpenses(t *testing.T) {
+	// Set up the mock DB and defer the close to after the test
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("An error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	// Set up the mock DB to return a row when Insert is called
+	expenseInsert := sqlmock.NewRows([]string{"id"}).AddRow(1)
+	mock.ExpectQuery("INSERT INTO expenses").WillReturnRows(expenseInsert)
+
+	// Save the mock DB in the config so it can be used in the function
+	config.DB = db
+
+	// Set up the HTTP request
+	requestBody, _ := json.Marshal(CustomerExpenses{
+		Title:  "Test Expense",
+		Amount: 100,
+		Note:   "Test note",
+		Tags:   []string{"test", "expense"},
+	})
+	req := httptest.NewRequest(http.MethodPost, "/expenses", bytes.NewReader(requestBody))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+	// Set up the HTTP recorder to capture the response
+	recorder := httptest.NewRecorder()
+	c := echo.New().NewContext(req, recorder)
+
+	// Call the function and check the response
+	if assert.NoError(t, AddExpenses(c)) {
+		assert.Equal(t, http.StatusCreated, recorder.Code)
+		var resp CustomerExpenses
+		json.Unmarshal(recorder.Body.Bytes(), &resp)
+		assert.Equal(t, 1, resp.ID)
+		assert.Equal(t, "Test Expense", resp.Title)
+		assert.Equal(t, float64(100), resp.Amount)
+		assert.Equal(t, "Test note", resp.Note)
+		assert.Equal(t, []string{"test", "expense"}, resp.Tags)
+	}
+
+	// Ensure all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }

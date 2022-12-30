@@ -10,4 +10,4 @@ CREATE TABLE IF NOT EXISTS expenses (
         tags TEXT[]
 );
 
-INSERT INTO "expenses" ("id", "title", "amount", "note", "tags") VALUES (1, 'test-title', 99, 'test-note', '{test_tag1, test_tag2}');
+INSERT INTO "expenses" ("id", "title", "amount", "note", "tags") VALUES (1, 'strawberry smoothie', 79, 'night market promotion discount 10 bath', '{food, beverage}');
