@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/labstack/echo/v4"
+	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/supachai-sukd/assessment/pkg/config"
 	"net/http"
@@ -67,14 +68,11 @@ func TestAddExpenses(t *testing.T) {
 	}
 	defer db.Close()
 
-	// Set up the mock DB to return a row when Insert is called
 	expenseInsert := sqlmock.NewRows([]string{"id"}).AddRow(1)
 	mock.ExpectQuery("INSERT INTO expenses").WillReturnRows(expenseInsert)
 
-	// Save the mock DB in the config so it can be used in the function
 	config.DB = db
 
-	// Set up the HTTP request
 	requestBody, _ := json.Marshal(CustomerExpenses{
 		Title:  "Test Expense",
 		Amount: 100,
@@ -103,5 +101,46 @@ func TestAddExpenses(t *testing.T) {
 	// Ensure all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestUpdateExpenses(t *testing.T) {
+	// Set up the mock database and a mock row with the expected ID
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	id := "123"
+	mockRow := sqlmock.NewRows([]string{"id"}).AddRow(id)
+
+	// Set up the mock preparer to return the mock row
+	prep := mock.ExpectPrepare("UPDATE expenses SET title=$2, amount=$3, note=$4, tags=$5::text[] WHERE id=$1 RETURNING id")
+	prep.ExpectQuery().WithArgs(id, "title", 100, "note", pq.Array([]string{"tag1", "tag2"})).WillReturnRows(mockRow)
+
+	// Set up the HTTP request and response recorder
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPut, "/expenses/"+id, strings.NewReader(`{"title":"title","amount":100,"note":"note","tags":["tag1","tag2"]}`))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/expenses/:id")
+	c.SetParamNames("id")
+	c.SetParamValues(id)
+
+	// Set the DB variable to the mock DB
+	config.DB = db
+
+	// Call the UpdateExpenses function
+	if assert.NoError(t, UpdateExpenses(c)) {
+		// Assert that the mock preparer and query were called as expected
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("there were unfulfilled expectations: %s", err)
+		}
+
+		// Assert that the response has the expected status code and body
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.JSONEq(t, `{"id":"123","title":"title","amount":100,"note":"note","tags":["tag1","tag2"]}`, rec.Body.String())
 	}
 }
