@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/labstack/echo/v4"
+
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/supachai-sukd/assessment/pkg/config"
@@ -137,5 +138,64 @@ func TestUpdateExpenses(t *testing.T) {
 	// Check if all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestGetExpensesById(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	ce := CustomerExpenses{
+		ID:     1,
+		Title:  "Test Expense",
+		Amount: 100,
+		Note:   "Test note",
+		Tags:   []string{"tag1", "tag2"},
+	}
+
+	tags := "{" + strings.Join(ce.Tags, ",") + "}"
+
+	// Set up expected rows to be returned from the mock database
+	rows := sqlmock.NewRows([]string{"id", "title", "amount", "note", "tags"}).
+		AddRow(ce.ID, ce.Title, ce.Amount, ce.Note, tags)
+
+	// Set up the mock to expect a query and return the expected rows
+	mock.ExpectQuery("SELECT id, title, amount, note, tags FROM expenses WHERE id = \\$1").
+		WithArgs("1").
+		WillReturnRows(rows)
+
+	e := echo.New()
+	c := e.NewContext(nil, nil)
+	c.SetPath("/expenses/:id")
+	c.SetParamNames("id")
+	c.SetParamValues("1")
+
+	// Call the GetExpensesById function with the mock database and context
+	if err := GetExpensesById(c); err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+
+	// Ensure all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+
+	// Check the response from the function to make sure it matches the expected result
+	if c.Response().Status != http.StatusOK {
+		t.Errorf("unexpected status code: got %d, want %d", c.Response().Status, http.StatusOK)
+	}
+	var resp CustomerExpenses
+	if err := c.JSON(http.StatusOK, &resp); err != nil {
+		t.Errorf("unexpected error unmarshalling response: %s", err)
+	}
+	if resp.ID != ce.ID {
+		t.Errorf("unexpected ID field in response: got %d, want %d", resp.ID, ce.ID)
+	}
+
+	if resp.Title != ce.Title {
+		t.Errorf("unexpected Title field in response: got %s, want %s", resp.Title, ce.Title)
 	}
 }
