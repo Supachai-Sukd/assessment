@@ -105,42 +105,37 @@ func TestAddExpenses(t *testing.T) {
 }
 
 func TestUpdateExpenses(t *testing.T) {
-	// Set up the mock database and a mock row with the expected ID
+	// Set up mock DB
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 	defer db.Close()
-
-	id := "123"
-	mockRow := sqlmock.NewRows([]string{"id"}).AddRow(id)
-
-	// Set up the mock preparer to return the mock row
-	prep := mock.ExpectPrepare("UPDATE expenses SET title=$2, amount=$3, note=$4, tags=$5::text[] WHERE id=$1 RETURNING id")
-	prep.ExpectQuery().WithArgs(id, "title", 100, "note", pq.Array([]string{"tag1", "tag2"})).WillReturnRows(mockRow)
-
-	// Set up the HTTP request and response recorder
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodPut, "/expenses/"+id, strings.NewReader(`{"title":"title","amount":100,"note":"note","tags":["tag1","tag2"]}`))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.SetPath("/expenses/:id")
-	c.SetParamNames("id")
-	c.SetParamValues(id)
-
-	// Set the DB variable to the mock DB
 	config.DB = db
 
-	// Call the UpdateExpenses function
-	if assert.NoError(t, UpdateExpenses(c)) {
-		// Assert that the mock preparer and query were called as expected
-		if err := mock.ExpectationsWereMet(); err != nil {
-			t.Errorf("there were unfulfilled expectations: %s", err)
-		}
+	// Define mock query and response
+	mock.ExpectPrepare("UPDATE expenses").
+		ExpectQuery().
+		WithArgs("1", "test title", float64(100), "test note", pq.Array([]string{"tag1", "tag2"})).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
-		// Assert that the response has the expected status code and body
-		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.JSONEq(t, `{"id":"123","title":"title","amount":100,"note":"note","tags":["tag1","tag2"]}`, rec.Body.String())
+	// Set up HTTP request and context
+	req := httptest.NewRequest(http.MethodPut, "/expenses/1", strings.NewReader(`{"title": "test title", "amount": 100, "note": "test note", "tags": ["tag1", "tag2"]}`))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := echo.New().NewContext(req, rec)
+	c.SetPath("/expenses/:id")
+	c.SetParamNames("id")
+	c.SetParamValues("1")
+
+	// Call UpdateExpenses and check response
+	err = UpdateExpenses(c)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.JSONEq(t, `{"id": 1, "title": "test title", "amount": 100, "note": "test note", "tags": ["tag1", "tag2"]}`, rec.Body.String())
+
+	// Check if all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
