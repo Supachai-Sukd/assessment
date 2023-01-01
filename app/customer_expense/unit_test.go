@@ -3,6 +3,7 @@ package customer_expense
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/labstack/echo/v4"
 
@@ -23,7 +24,7 @@ import (
 	_ "github.com/stretchr/testify/assert"
 )
 
-func TestListExpenses(t *testing.T) {
+func TestListExpensesUnit(t *testing.T) {
 	// Arrange
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/expenses", strings.NewReader(""))
@@ -61,7 +62,7 @@ func TestListExpenses(t *testing.T) {
 	}
 }
 
-func TestAddExpenses(t *testing.T) {
+func TestAddExpensesUnit(t *testing.T) {
 	// Set up the mock DB and defer the close to after the test
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -105,7 +106,7 @@ func TestAddExpenses(t *testing.T) {
 	}
 }
 
-func TestUpdateExpenses(t *testing.T) {
+func TestUpdateExpensesUnit(t *testing.T) {
 	// Set up mock DB
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -141,61 +142,35 @@ func TestUpdateExpenses(t *testing.T) {
 	}
 }
 
-func TestGetExpensesById(t *testing.T) {
-	db, mock, err := sqlmock.New()
+func TestGetExpensesByIdUnit(t *testing.T) {
+	// Set up mock data
+	mockDB, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
-	defer db.Close()
+	defer mockDB.Close()
 
-	ce := CustomerExpenses{
-		ID:     1,
-		Title:  "Test Expense",
-		Amount: 100,
-		Note:   "Test note",
-		Tags:   []string{"tag1", "tag2"},
-	}
-
-	tags := "{" + strings.Join(ce.Tags, ",") + "}"
-
-	// Set up expected rows to be returned from the mock database
-	rows := sqlmock.NewRows([]string{"id", "title", "amount", "note", "tags"}).
-		AddRow(ce.ID, ce.Title, ce.Amount, ce.Note, tags)
-
-	// Set up the mock to expect a query and return the expected rows
+	expenseID := "abc123"
 	mock.ExpectQuery("SELECT id, title, amount, note, tags FROM expenses WHERE id = \\$1").
-		WithArgs("1").
-		WillReturnRows(rows)
+		WithArgs(expenseID).
+		WillReturnError(fmt.Errorf("sql: database is closed"))
 
+	// Set up mock context
 	e := echo.New()
-	c := e.NewContext(nil, nil)
+	req := httptest.NewRequest(http.MethodGet, "/expenses/"+expenseID, nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
 	c.SetPath("/expenses/:id")
 	c.SetParamNames("id")
-	c.SetParamValues("1")
+	c.SetParamValues(expenseID)
 
-	// Call the GetExpensesById function with the mock database and context
+	// Call GetExpensesById
 	if err := GetExpensesById(c); err != nil {
-		t.Errorf("unexpected error: %s", err)
+		t.Errorf("GetExpensesById returned unexpected error: %v", err)
 	}
 
-	// Ensure all expectations were met
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
-
-	// Check the response from the function to make sure it matches the expected result
-	if c.Response().Status != http.StatusOK {
-		t.Errorf("unexpected status code: got %d, want %d", c.Response().Status, http.StatusOK)
-	}
-	var resp CustomerExpenses
-	if err := c.JSON(http.StatusOK, &resp); err != nil {
-		t.Errorf("unexpected error unmarshalling response: %s", err)
-	}
-	if resp.ID != ce.ID {
-		t.Errorf("unexpected ID field in response: got %d, want %d", resp.ID, ce.ID)
-	}
-
-	if resp.Title != ce.Title {
-		t.Errorf("unexpected Title field in response: got %s, want %s", resp.Title, ce.Title)
-	}
+	// Assertions
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	expectedBody := `{"message":"can't scan expenses information:sql: database is closed"}`
+	assert.JSONEq(t, expectedBody, rec.Body.String())
 }

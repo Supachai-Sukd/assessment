@@ -16,7 +16,7 @@ import (
 
 // go test -v -tags integration
 
-func TestAddExpense(t *testing.T) {
+func TestAddExpenseIntegration(t *testing.T) {
 
 	body := bytes.NewBufferString(`{
 		"title": "bank",
@@ -37,7 +37,7 @@ func TestAddExpense(t *testing.T) {
 	assert.Equal(t, "banana", c.Note)
 }
 
-func TestGetExpensesById(t *testing.T) {
+func TestGetExpensesByIdIntegration(t *testing.T) {
 	ce := seedExpensesInformation(t)
 
 	var latest CustomerExpenses
@@ -53,7 +53,7 @@ func TestGetExpensesById(t *testing.T) {
 	assert.NotEmpty(t, latest.Tags)
 }
 
-func TestUpdateExpensesById(t *testing.T) {
+func TestUpdateExpensesByIdIntegration(t *testing.T) {
 	ce := seedExpensesInformation(t)
 
 	body := bytes.NewBufferString(`{
@@ -76,7 +76,7 @@ func TestUpdateExpensesById(t *testing.T) {
 	assert.NotEmpty(t, latest.Tags)
 }
 
-func TestGetAllExpenses(t *testing.T) {
+func TestGetAllExpensesIntegration(t *testing.T) {
 	_ = seedExpensesInformation(t)
 
 	var latest []CustomerExpenses
