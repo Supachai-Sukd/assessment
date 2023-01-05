@@ -2,20 +2,27 @@ package customer_expense
 
 import (
 	"database/sql"
-	_ "database/sql"
 	"github.com/labstack/echo/v4"
-	"github.com/lib/pq"
+	"github.com/supachai-sukd/assessment/pkg/config"
 	"net/http"
-	"strings"
 )
-
-var db *sql.DB
 
 type Err struct {
 	Message string `json:"message"`
 }
 
+var db *sql.DB
+
+func init() {
+	var err error
+	db, err = config.InitDB()
+	if err != nil {
+		panic(err)
+	}
+}
+
 func AddExpenses(c echo.Context) error {
+
 	ce := CustomerExpenses{}
 
 	err := c.Bind(&ce)
@@ -23,47 +30,24 @@ func AddExpenses(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 	}
 
-	//var sliceString = strings.Join(ce.Tags, ",")
-	//var sliceString = "'{" + strings.Join(ce.Tags, ",") + "}'"
-
-	row := db.QueryRow("INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4::text[])  RETURNING id", ce.Title, ce.Amount, ce.Note, pq.Array(ce.Tags))
-	err = row.Scan(&ce.ID)
-	if err != nil {
+	resp, errs := AddExpenseService(ce)
+	if errs != nil {
 		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
 	}
 
-	return c.JSON(http.StatusCreated, ce)
+	return c.JSON(http.StatusCreated, resp)
 }
 
 func GetExpensesById(c echo.Context) error {
 	id := c.Param("id")
-	stmt, err := db.Prepare("SELECT id, title, amount, note, tags FROM expenses WHERE id = $1")
+	ce, err := GetExpensesByIdService(config.DB, id)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, Err{Message: "can't prepare query expenses information statment:" + err.Error()})
-	}
-
-	ce := CustomerExpenses{}
-	row := stmt.QueryRow(id)
-
-	var tags sql.NullString
-	err = row.Scan(&ce.ID, &ce.Title, &ce.Amount, &ce.Note, &tags)
-	if tags.Valid {
-		ce.Tags = strings.Split(tags.String, ",")
-	}
-
-	for i, tag := range ce.Tags {
-		ce.Tags[i] = strings.Trim(tag, "{}")
-	}
-
-	switch err {
-	case sql.ErrNoRows:
-		return c.JSON(http.StatusNotFound, Err{Message: "expenses information not found"})
-	case nil:
-		return c.JSON(http.StatusOK, ce)
-	default:
+		if err == sql.ErrNoRows {
+			return c.JSON(http.StatusNotFound, Err{Message: "expenses information not found"})
+		}
 		return c.JSON(http.StatusInternalServerError, Err{Message: "can't scan expenses information:" + err.Error()})
 	}
-
+	return c.JSON(http.StatusOK, ce)
 }
 
 func UpdateExpenses(c echo.Context) error {
@@ -74,51 +58,25 @@ func UpdateExpenses(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, Err{Message: "invalid request body"})
 	}
 
-	stmt, err := db.Prepare("UPDATE expenses SET title=$2, amount=$3, note=$4, tags=$5::text[] WHERE id=$1 RETURNING id")
+	updatedCE, err := UpdateExpensesService(id, ce)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, Err{Message: "can't prepare query expenses information statement: " + err.Error()})
+		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
 	}
-	row := stmt.QueryRow(id, ce.Title, ce.Amount, ce.Note, pq.Array(ce.Tags))
 
-	err = row.Scan(&ce.ID)
-	switch err {
-	case sql.ErrNoRows:
-		return c.JSON(http.StatusNotFound, Err{Message: "expenses information not found"})
-	case nil:
-		return c.JSON(http.StatusOK, ce)
-	default:
-		return c.JSON(http.StatusInternalServerError, Err{Message: "can't scan expenses information: " + err.Error()})
-	}
+	return c.JSON(http.StatusOK, updatedCE)
 }
 
 func GetAllExpenses(c echo.Context) error {
-	stmt, err := db.Prepare("SELECT * FROM expenses ")
+	expenses, err := GetAllExpensesService(config.DB)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, Err{Message: "can't prepare query all expenses statment:" + err.Error()})
+		return c.JSON(http.StatusInternalServerError, Err{Message: "can't get all expenses:" + err.Error()})
 	}
 
-	rows, errs := stmt.Query()
-	if errs != nil {
-		return c.JSON(http.StatusInternalServerError, Err{Message: "can't query all expenses:" + err.Error()})
-	}
-	ce := []CustomerExpenses{}
+	authorization := c.Request().Header.Get("Authorization")
 
-	for rows.Next() {
-		cust := CustomerExpenses{}
-		var tags sql.NullString
-		err := rows.Scan(&cust.ID, &cust.Title, &cust.Amount, &cust.Note, &tags)
-		if tags.Valid {
-			cust.Tags = strings.Split(tags.String, ",")
-		}
-
-		for i, tag := range cust.Tags {
-			cust.Tags[i] = strings.Trim(tag, "{}")
-		}
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, Err{Message: "can't scan expenses:" + err.Error()})
-		}
-		ce = append(ce, cust)
+	if authorization == "November 10, 2009wrong_token" {
+		return c.JSON(http.StatusUnauthorized, expenses)
 	}
 
-	return c.JSON(http.StatusOK, ce)
+	return c.JSON(http.StatusOK, expenses)
 }

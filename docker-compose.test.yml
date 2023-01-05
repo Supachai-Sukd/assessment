@@ -1,27 +1,37 @@
-version: '3.2'
+version: "3.2"
 
 networks:
-  integration-test:
+  integration-test-example:
+
 
 services:
-  it_tests:
+  app:
     build:
       context: .
-      dockerfile: ./Dockerfile.test
+      dockerfile: Dockerfile.test
     volumes:
       - $PWD:/go/src/target
+    networks:
+      - integration-test-example
+    ports:
+      - "2565:2565"
+    env_file:
+      - docker.env
     depends_on:
-      - db
-    networks:
-      - integration-test
-  db:
+      - postgres
+  postgres:
     image: postgres:12.12
+    container_name: golang_postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER_TEST:-root}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_TEST:-root}
-      POSTGRES_DB: go -db
-    restart: on-failure
-    volumes:
-      - ./platform/db_test:/docker-entrypoint-initdb.d/
+      - POSTGRES_USER=gopher
+      - POSTGRES_PASSWORD=Gopher123
+      - POSTGRES_DB=postgres
     networks:
-      - integration-test
+      - integration-test-example
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d/
+    restart: on-failure
+    ports:
+      - "9999:5432"
+    expose:
+      - "9999"

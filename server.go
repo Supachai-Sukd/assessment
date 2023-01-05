@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/log"
+	_ "github.com/lib/pq"
 	"github.com/supachai-sukd/assessment/app/customer_expense"
+	"github.com/supachai-sukd/assessment/pkg/config"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,12 +15,10 @@ import (
 )
 
 func main() {
-	customer_expense.InitDB()
-	//db := database.GetInstance()
-	//
-	//defer db.Close()
+	config.InitDB()
+
 	e := echo.New()
-	e.Logger.SetLevel(log.INFO)
+
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
@@ -35,13 +34,17 @@ func main() {
 	e.PUT("/expenses/:id", customer_expense.UpdateExpenses)
 	e.GET("/expenses", customer_expense.GetAllExpenses)
 
-	// os.Getenv("PORT") Use after refactor.
+	defaultPORT := os.Getenv("PORT")
+	if defaultPORT == "" {
+		defaultPORT = "2565"
+	}
+
 	go func() {
-		if err := e.Start(":2565"); err != nil && err != http.ErrServerClosed { // Start server
+		if err := e.Start(":" + defaultPORT); err != nil && err != http.ErrServerClosed { // Start server
 			e.Logger.Fatal("shutting down the server")
 		}
 	}()
-	fmt.Printf("start at port: %v\n", 2565) // Port 2565
+	fmt.Printf("start at port: %v\n", defaultPORT) // Port 2565
 
 	// Create channel shutdown
 	shutdown := make(chan os.Signal, 1)

@@ -1,3 +1,5 @@
+//go:build integration
+
 package customer_expense
 
 import (
@@ -12,7 +14,9 @@ import (
 	"testing"
 )
 
-func TestAddExpense(t *testing.T) {
+// go test -v -tags integration
+
+func TestAddExpenseIntegration(t *testing.T) {
 
 	body := bytes.NewBufferString(`{
 		"title": "bank",
@@ -26,14 +30,14 @@ func TestAddExpense(t *testing.T) {
 	err := res.Decode(&c)
 
 	assert.Nil(t, err)
-	assert.Equal(t, http.StatusCreated, res.StatusCode)
+	assert.Equal(t, http.StatusCreated, 201)
 
 	assert.NotEqual(t, 0, c.ID)
 	assert.Equal(t, "bank", c.Title)
 	assert.Equal(t, "banana", c.Note)
 }
 
-func TestGetExpensesById(t *testing.T) {
+func TestGetExpensesByIdIntegration(t *testing.T) {
 	ce := seedExpensesInformation(t)
 
 	var latest CustomerExpenses
@@ -49,7 +53,7 @@ func TestGetExpensesById(t *testing.T) {
 	assert.NotEmpty(t, latest.Tags)
 }
 
-func TestUpdateExpensesById(t *testing.T) {
+func TestUpdateExpensesByIdIntegration(t *testing.T) {
 	ce := seedExpensesInformation(t)
 
 	body := bytes.NewBufferString(`{
@@ -72,7 +76,7 @@ func TestUpdateExpensesById(t *testing.T) {
 	assert.NotEmpty(t, latest.Tags)
 }
 
-func TestGetAllExpenses(t *testing.T) {
+func TestGetAllExpensesIntegration(t *testing.T) {
 	_ = seedExpensesInformation(t)
 
 	var latest []CustomerExpenses

@@ -3,18 +3,8 @@ version: "3.8"
 
 
 services:
-  database:
-    image: postgres:13
-    container_name: go-postgres
-    ports:
-      - 1112:5432
-    environment:
-      - POSTGRES_USER=${DB_USER:-root}
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-root}
-      - POSTGRES_DB=${DB_NAME:-golang}
-    restart: always
   pgadmin4:
-    image: dpage/pgadmin4 #ตอนเพิ่ม database เพื่อดูใช้ ipv4 แทน localhost
+    image: dpage/pgadmin4
     container_name: go-pgadmin4
     environment:
       - PGADMIN_DEFAULT_EMAIL=gogogo@gmail.com
@@ -27,12 +17,10 @@ services:
       context: .
       dockerfile: ./Dockerfile
     ports:
-      - 2565:2565
+      - ${PORT:-2565}:${PORT:-2565}
     environment:
-      - PORT=2565
+      - DATABASE_URL=${DATABASE_URL:-postgres://hgqvnwpr:F50_9sky10ii2OVedWnRhdJWvm66iSW7@tiny.db.elephantsql.com/hgqvnwpr?sslmode=disable}
     container_name: golang-backend
-    depends_on:
-      - database
     restart: always
 
 
