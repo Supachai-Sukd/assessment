@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	_ "github.com/lib/pq"
 	"github.com/supachai-sukd/assessment/app/customer_expense"
 	"github.com/supachai-sukd/assessment/pkg/config"
 	"net/http"

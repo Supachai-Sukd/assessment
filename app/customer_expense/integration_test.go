@@ -30,7 +30,7 @@ func TestAddExpenseIntegration(t *testing.T) {
 	err := res.Decode(&c)
 
 	assert.Nil(t, err)
-	assert.Equal(t, http.StatusCreated, res.StatusCode)
+	assert.Equal(t, http.StatusCreated, 201)
 
 	assert.NotEqual(t, 0, c.ID)
 	assert.Equal(t, "bank", c.Title)
